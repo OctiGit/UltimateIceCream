@@ -1,36 +1,41 @@
-import React, { useEffect, useRef, useState } from 'react';
+// import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { getIceCream, postMenuItem } from '../data/iceCreamData';
+// import { getIceCream, postMenuItem } from '../data/iceCreamData';
 import LoaderMessage from '../structure/LoaderMessage';
 import IceCream from './IceCream';
 import Main from '../structure/Main';
+import { useFetchIceCreamQuery, usePostMenuItemMutation } from '../store';
 
 const EditIceCream = ({ history, location }) => {
-  const isMounted = useRef(true);
-  const [iceCream, setIceCream] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  // const isMounted = useRef(true);
+  const { data, error, isFetching } = useFetchIceCreamQuery(
+    location.search.split('=')[1]
+  );
+  const [postMenuItem, results] = usePostMenuItemMutation();
+  // const [iceCream, setIceCream] = useState({});
+  // const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     isMounted.current = false;
+  //   };
+  // }, []);
 
-  useEffect(() => {
-    setIsLoading(true);
-    getIceCream(location.search.split('=')[1])
-      .then(item => {
-        if (isMounted.current) {
-          setIceCream(item);
-          setIsLoading(false);
-        }
-      })
-      .catch(err => {
-        if (err.response.status === 404 && isMounted.current) {
-          history.replace('/', { focus: true });
-        }
-      });
-  }, [history, location.search]);
+  // useEffect(() => {
+  //   setIsLoading(true);
+  //   getIceCream(location.search.split('=')[1])
+  //     .then(item => {
+  //       if (isMounted.current) {
+  //         setIceCream(item);
+  //         setIsLoading(false);
+  //       }
+  //     })
+  //     .catch(err => {
+  //       if (err.response.status === 404 && isMounted.current) {
+  //         history.replace('/', { focus: true });
+  //       }
+  //     });
+  // }, [history, location.search]);
 
   const onSubmitHandler = menuItem => {
     postMenuItem(menuItem).then(() => {
@@ -38,15 +43,21 @@ const EditIceCream = ({ history, location }) => {
     });
   };
 
+  if (error) {
+    history.replace('/', { focus: true });
+    return null;
+  }
   return (
     <Main headingText="Add some goodness to the menu">
       <LoaderMessage
         loadingMessage="Loading ice cream"
         doneMessage="Ice cream loaded."
-        isLoading={isLoading}
+        // isLoading={isLoading}
+        isLoading={isFetching}
       />
-      {!isLoading && (
-        <IceCream iceCream={iceCream} onSubmit={onSubmitHandler} />
+      {!isFetching && (
+        // <IceCream iceCream={iceCream} onSubmit={onSubmitHandler} />
+        <IceCream iceCream={data} onSubmit={onSubmitHandler} />
       )}
     </Main>
   );
