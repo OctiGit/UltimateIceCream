@@ -3,7 +3,7 @@ import IceCreamImage from './IceCreamImage';
 import FocusLink from '../structure/FocusLink';
 import PropTypes from 'prop-types';
 
-const IceCreamCard = ({ children, to, history, iceCreamId, heading }) => {
+const IceCreamCard = ({ children, to, history, imgURL, heading }) => {
   const onItemClickHandler = () => {
     history.push(to, { focus: true });
   };
@@ -16,7 +16,7 @@ const IceCreamCard = ({ children, to, history, iceCreamId, heading }) => {
   return (
     <section className="card" onClick={onItemClickHandler}>
       <div className="image-container">
-        <IceCreamImage iceCreamId={iceCreamId} />
+        <IceCreamImage imgURL={imgURL} />
       </div>
       <div className="text-container">
         <h3>
@@ -31,7 +31,7 @@ const IceCreamCard = ({ children, to, history, iceCreamId, heading }) => {
 };
 
 IceCreamCard.propTypes = {
-  iceCreamId: PropTypes.number.isRequired,
+  imgURL: PropTypes.string.isRequired,
   heading: PropTypes.string.isRequired,
   to: PropTypes.oneOfType([
     PropTypes.string,

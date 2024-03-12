@@ -1,5 +1,13 @@
 import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react';
-import axios from 'axios';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  updateDoc,
+} from 'firebase/firestore';
+import { db } from '../../Firebase/config';
 
 const menuItemsApi = createApi({
   reducerPath: 'menuItems',
@@ -8,75 +16,118 @@ const menuItemsApi = createApi({
     return {
       fetchMenu: builder.query({
         async queryFn() {
-          const { data } = await axios.get('/api/menu');
-          data.sort((a, b) => {
-            if (a.iceCream.name < b.iceCream.name) return -1;
-            if (a.iceCream.name > b.iceCream.name) return 1;
-            return 0;
-          });
-          return { data };
+          try {
+            const querySnapshot = await getDocs(collection(db, 'menuData'));
+            const menuData = querySnapshot.docs.map(doc => {
+              return {
+                ...doc.data(),
+                id: doc.id,
+              };
+            });
+            menuData.sort((a, b) => {
+              if (a.iceCream.name < b.iceCream.name) return -1;
+              if (a.iceCream.name > b.iceCream.name) return 1;
+              return 0;
+            });
+            return { data: menuData };
+          } catch (error) {
+            return { error };
+          }
         },
-        providesTags: (result, error, arg) => {
-          const tags = result.map(menuItem => {
-            return { type: 'MenuItem', id: menuItem.id.toString() };
-          });
-          return tags;
-        },
+        providesTags: ['MenuItems'],
       }),
       fetchMenuItem: builder.query({
         async queryFn(id) {
           try {
-            const { data } = await axios.get(`/api/menu/${id.toString()}`);
-            return { data };
+            const querySnapshot = await getDocs(collection(db, 'menuData'));
+            const menuData = querySnapshot.docs.map(doc => {
+              return {
+                ...doc.data(),
+                id: doc.id,
+              };
+            });
+
+            const menuItem = menuData.find(item => item.id === id);
+
+            return { data: menuItem };
           } catch (error) {
             return { error };
           }
         },
-        providesTags: (result, error, id) => {
-          return [{ type: 'MenuItem', id: id.toString() }];
-        },
+        providesTags: ['MenuItems'],
       }),
       postMenuItem: builder.mutation({
         async queryFn(menuItem) {
           try {
-            const { data } = await axios.post('/api/menu', menuItem);
-            return { data };
+            const iceCreamsQuerySnapshot = await getDocs(
+              collection(db, 'iceCreams')
+            );
+            const iceCreams = iceCreamsQuerySnapshot.docs.map(doc =>
+              doc.data()
+            );
+
+            const { iceCream, ...rest } = menuItem;
+            const newMenuItem = {
+              iceCream: {
+                ...iceCreams.find(
+                  item => item.id === parseInt(iceCream.id, 10)
+                ),
+              },
+              ...rest,
+            };
+
+            await addDoc(collection(db, 'menuData'), newMenuItem);
+
+            return { data: newMenuItem };
           } catch (error) {
             return { error };
           }
         },
-        invalidatesTags: (results, error, menuItem) => {
-          return [{ type: menuItem, id: menuItem.id.toString() }];
-        },
+        invalidatesTags: ['MenuItems'],
       }),
       putMenuItem: builder.mutation({
-        async queryFn(menuItem) {
+        async queryFn(updatedItem) {
           try {
-            const { data } = await axios.put(
-              `/api/menu/${menuItem.id.toString()}`,
-              menuItem
+            const iceCreamsQuerySnapshot = await getDocs(
+              collection(db, 'iceCreams')
             );
-            return { data };
+            const iceCreams = iceCreamsQuerySnapshot.docs.map(doc =>
+              doc.data()
+            );
+            const { iceCream, ...rest } = updatedItem;
+            const newUpdatedItem = {
+              id: updatedItem.id,
+              iceCream: {
+                ...iceCreams.find(
+                  item => item.id === parseInt(iceCream.id, 10)
+                ),
+              },
+              ...rest,
+            };
+
+            await updateDoc(
+              doc(db, 'menuData', newUpdatedItem.id),
+              newUpdatedItem
+            );
+
+            return { data: newUpdatedItem };
           } catch (error) {
             return { error };
           }
         },
-        invalidatesTags: (result, error, menuItem) => {
-          return [{ type: 'MenuItem', id: menuItem.id.toString() }];
-        },
+        invalidatesTags: ['MenuItems'],
       }),
       deleteMenuItem: builder.mutation({
         async queryFn(id) {
           try {
-            await axios.delete(`/api/menu/${id.toString()}`);
+            await deleteDoc(doc(db, 'menuData', id));
+
             return { data: 'Item deleted' };
           } catch (error) {
             return { error: 'error deleting item' };
           }
         },
-        invalidatesTags: (result, error, id) => {
-          return [{ type: 'MenuItem', id: id.toString() }];
-        },
+        invalidatesTags: ['MenuItems'],
       }),
     };
   },

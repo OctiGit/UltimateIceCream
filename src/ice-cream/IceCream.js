@@ -115,7 +115,7 @@ const IceCream = ({
   return (
     <div className="form-frame">
       <div className="image-container">
-        <IceCreamImage iceCreamId={iceCream.id} />
+        <IceCreamImage imgURL={iceCream.imgURL} />
       </div>
       <div className="form-container">
         <dl>
@@ -210,6 +210,7 @@ IceCream.propTypes = {
   iceCream: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
+    imgURL: PropTypes.string,
   }),
   price: PropTypes.number,
   quantity: PropTypes.number,
